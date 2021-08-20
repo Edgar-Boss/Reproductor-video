@@ -31,7 +31,7 @@ MainWindow::MainWindow(int argc, char **argv, QWidget *parent)
 
 
 
-
+    //comentario de prueba
     // filtros
     QStringList filtros;
     filtros << "*.mp4"
