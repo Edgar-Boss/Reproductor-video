@@ -32,7 +32,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(int argc,char **argv,QWidget *parent = nullptr);
+    MainWindow(char **argv, QWidget *parent = nullptr);
     ~MainWindow();
 
 protected:
@@ -41,7 +41,7 @@ protected:
 
 
 public slots:
-    void Reproductor(QString name,int index);
+    void Reproductor(QString name, int index);
     void Ajustar_elementos();
     void recnumeros();
     void Ocultar_lista();
@@ -54,8 +54,9 @@ public slots:
     void Imprimir_tiempo();
     void guardar_tiempo();
     void get_frames(QString path);
+    double agregar_a_listas(QString path, int index);
     QStringList Conv_sm_min();
-    QStringList  Elim_rep(QStringList lista, QString path, int &ind);
+    QStringList  Elim_rep(QStringList lista, QString path, int &ind, bool &res);
 
 
 
@@ -135,6 +136,7 @@ private:
     bool full; //si la ventana se encuentra full
     bool recientes; // si se estan usando videos en la lista de recientes
     bool hilo;//si algun hilo esta corriendo
+
 
     int ancho_vent;
     int alto_vent;

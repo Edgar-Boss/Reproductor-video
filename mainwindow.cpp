@@ -16,7 +16,7 @@
 #include "ui_mainwindow.h"
 
 
-MainWindow::MainWindow(int argc, char **argv, QWidget *parent)
+MainWindow::MainWindow(char **argv, QWidget *parent)
     : QMainWindow(parent,Qt::FramelessWindowHint)
     , ui(new Ui::MainWindow)
 {
@@ -29,9 +29,6 @@ MainWindow::MainWindow(int argc, char **argv, QWidget *parent)
     _player->stop_mouse();// detiene eventos del mose de vlc
     ui->stack_vid->insertWidget(0,_viwid);//coloca el reproductor en stacked
 
-
-
-    //comentario de prueba
     // filtros
     QStringList filtros;
     filtros << "*.mp4"
@@ -58,6 +55,7 @@ MainWindow::MainWindow(int argc, char **argv, QWidget *parent)
 
     model = _file->get_datos();//obtiene los nombres de los archivos recientes
     L_paths = _file->get_paths();//obtiene los datos de los paths recientes
+    //ui->label->setText(QCoreApplication::applicationDirPath());
     ui->lstv_directorio->setModel(model);//coloca model de los nombres al listview
     L_tiempos = _file->obtener_tiempos();//obtiene los tiempos guardados
 
@@ -69,21 +67,20 @@ MainWindow::MainWindow(int argc, char **argv, QWidget *parent)
     full=false;
     hilo = false;
 
-
+    L_paths = _file->get_paths();//obitne los paths usados recientemente
+    L_tiempos=_file->obtener_tiempos();//obtiene los tiempos usados recientemente
+    double posi;
      if (argv[1]!=nullptr)
      {
          QString arg= argv[1];
 
         if(arg.endsWith(".mp4") || arg.endsWith(".mkv") || arg.endsWith(".avi"))
         {
-            L_paths = _file->get_paths();
             arg.replace("\\","/");//remplaza \ por // para maejo de los metodos del _file
+
             Reproductor(arg,0);
         }
      }
-
-
-
 }
 
 MainWindow::~MainWindow()
@@ -114,9 +111,7 @@ void MainWindow::Declarar_objetos()
 
 void MainWindow::Reproductor(QString path, int index)//metodo para reproducir video
 {
-
-
-
+    double posi;
     if(hilo==true)
     {
         guardar_tiempo();
@@ -125,62 +120,64 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
     }
     time = new Hilo_tiempo();
     hilo=true;
+
     connect(time,&Hilo_tiempo::env_tiempo,this,&MainWindow::Imprimir_tiempo);
     connect(_player,&PlayerVLC::positionChanged,this,&MainWindow::colocar_posicion);
     _player->setMedia(QUrl::fromLocalFile(path));
     _player->play();
     dur_max=_player->duration();
-    double pos;
-    if(recientes)
-        pos=L_tiempos.at(index)/dur_max;
-    else
-        pos=0;
+    posi=agregar_a_listas(path,index);
+    ui->label->setText(QString::number(posi));
 
-    _player->setPosition(pos);
+    _file->Vaciar_tiempos(L_tiempos);//escribe en archivo los tiempos
+    _file->Vaciar_datos(L_paths);//escribe en archivo los paths
+    L_nombres = _file->get_nombres();//lee archivos y obtiene nombres
+    model->setStringList(QStringList{});
+    model = _file->get_datos();
+    ui->lstv_directorio->setModel(model);  //coloca nombres en lista de recientes de listview
+
+    _player->setPosition(posi);
     ui->sld_dur->setMaximum(dur_max);
 
     get_frames(path);
 
+    recientes=true;
 
-    if(_player->isPlaying())
-    {
-
-        int ind_r=0;
-        int aux;
-        L_paths = Elim_rep(L_paths,path,ind_r);
-        L_paths.insert(0,path);
-
-        if(!recientes)
-        {
-            L_tiempos=_file->obtener_tiempos();
-            L_tiempos.insert(0,0);
-            _file->Vaciar_tiempos(L_tiempos);
-        }
-        else
-        {
-            L_tiempos=_file->obtener_tiempos();
-            aux=L_tiempos.at(ind_r);
-            L_tiempos.removeAt(ind_r);
-            L_tiempos.insert(0,aux);
-            _file->Vaciar_tiempos(L_tiempos);
-
-        }
-
-        _file->Vaciar_datos(L_paths);
-        _file->Leer_archivo();
-        L_nombres = _file->get_nombres();
-        L_paths = _file->get_paths();
-        model->setStringList(QStringList{});
-        model = _file->get_datos();
-        ui->lstv_directorio->setModel(model);
-
-
-        recientes=true;
-    }
 
     Colocar_dur();
     time->start();
 
+
+}
+
+
+double MainWindow::agregar_a_listas(QString path,int index)
+{
+    int ind_r=0;
+    int aux;
+    bool res;
+    double posi;
+    L_paths = Elim_rep(L_paths,path,ind_r,res);//elimina repetidos si los hay y regresa el indice (ind_r) donde lo encontro
+    L_paths.insert(0,path);//agrega al principio de la lista el nuevo path
+
+
+    if(res)//si el video esta en recientes
+    {
+        posi=L_tiempos.at(index)/dur_max;
+        aux=L_tiempos.at(ind_r);//obtiene el tiempo del indice
+        L_tiempos.removeAt(ind_r);//remueve el tiempo en el indice de tiempos
+        L_tiempos.insert(0,aux);//inserta en la posicion 0 el tiempo de aux
+
+    }
+    else//si el video no esta en recientes
+    {
+
+        posi=0;
+        L_tiempos.insert(0,0);//agrega un 0 a la primera posicion
+
+    }
+
+    return posi;
 
 }
 
@@ -230,12 +227,14 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 }
 
-QStringList MainWindow::Elim_rep(QStringList lista,QString path, int &ind)
+QStringList MainWindow::Elim_rep(QStringList lista,QString path, int &ind, bool &res)
 {
+    res=false;
     for(int k=0;k<lista.count();k++)
     {
         if(lista.at(k)==path)
         {
+            res= true;
             lista.removeAt(k);
             ind=k;
         }
@@ -602,6 +601,7 @@ void MainWindow::on_lstv_directorio_doubleClicked(const QModelIndex &index)//Sel
     //Reproducir
     L_paths = _file->get_paths();
     QString rep;
+
 
     if(recientes)
     {

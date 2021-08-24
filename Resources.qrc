@@ -3,4 +3,5 @@
         <file>Icon/close.png</file>
         <file>Icon/slider.png</file>
     </qresource>
+    <qresource prefix="/datos"/>
 </RCC>
