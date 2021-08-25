@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QStringListModel>
+#include <QKeyEvent>
 
 
 #include "mainwindow.h"
@@ -24,6 +25,7 @@ MainWindow::MainWindow(char **argv, QWidget *parent)
 
 
     Declarar_objetos();
+    Colocar_imagenes();
     _viwid->setMouseTracking(true);//hablilitar trazado del mouse en video
     _player->setVideoOutput(_viwid);
     _player->stop_mouse();// detiene eventos del mose de vlc
@@ -41,11 +43,9 @@ MainWindow::MainWindow(char **argv, QWidget *parent)
     archivo->setNameFilterDisables(false);
     archivo->setRootPath(_direc.path());
     //acomodar icono
-    QPixmap *image= new QPixmap(":/icon/Icon/close.png");
-    QIcon icon(*image);
-    QSize iconSize(30,30);
-    ui->btn_close->setIcon(icon);
-    ui->btn_close->setIconSize(iconSize);
+
+
+
     //stylesheet del la lista del directorio
     ui->lstv_directorio->setStyleSheet("QListView::item:hover{background-color: rgb(162, 255, 176,50);}"
                                         "QListView::item:selected{background-color: rgb(146,252,45,150);}"
@@ -69,15 +69,14 @@ MainWindow::MainWindow(char **argv, QWidget *parent)
 
     L_paths = _file->get_paths();//obitne los paths usados recientemente
     L_tiempos=_file->obtener_tiempos();//obtiene los tiempos usados recientemente
-    double posi;
+
      if (argv[1]!=nullptr)
      {
-         QString arg= argv[1];
+        QString arg= argv[1];
 
         if(arg.endsWith(".mp4") || arg.endsWith(".mkv") || arg.endsWith(".avi"))
         {
             arg.replace("\\","/");//remplaza \ por // para maejo de los metodos del _file
-
             Reproductor(arg,0);
         }
      }
@@ -88,8 +87,51 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::Colocar_imagenes()
+{
+
+
+    QIcon icon(*px_close);
+    QSize iconSize(30,30);
+    ui->btn_close->setIcon(icon);
+    ui->btn_close->setIconSize(iconSize);
+
+    QIcon icon_max(*px_max);
+    QSize iconSize_max(18,18);
+    ui->btn_max->setIcon(icon_max);
+    ui->btn_max->setIconSize(iconSize_max);
+
+    QIcon icon_min(*px_min);
+    QSize iconSize_min(18,18);
+    ui->btn_min->setIcon(icon_min);
+    ui->btn_min->setIconSize(iconSize_min);
+
+    QIcon icon_full(*px_full);
+    QSize iconSize_full(15,15);
+    ui->btn_full->setIcon(icon_full);
+    ui->btn_full->setIconSize(iconSize_full);
+}
+
+void MainWindow::Pausar_reanudar()
+{
+
+    if(_player->isPlaying())
+        _player->pause();
+    else
+    {
+         time->start();
+        _player->play();
+    }
+}
+
 void MainWindow::Declarar_objetos()
 {
+    px_close = new QPixmap(":/icon/Icon/close.png");
+    px_max = new QPixmap(":/icon/Icon/window_maximize.png");
+    px_rest = new QPixmap(":/icon/Icon/restaurar.png");
+    px_min = new QPixmap(":/icon/Icon/minimize_.png");
+    px_full= new QPixmap(":/icon/Icon/full_screen.png");
+    px_exit_full = new QPixmap(":/icon/Icon/exit_full_screen.png");
     ani_lst = new QPropertyAnimation(ui->lstv_directorio,"geometry");
     ani_play = new QPropertyAnimation(ui->btn_play,"geometry");
     ani_atras = new QPropertyAnimation(ui->btn_atras_,"geometry");
@@ -127,7 +169,7 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
     _player->play();
     dur_max=_player->duration();
     posi=agregar_a_listas(path,index);
-    ui->label->setText(QString::number(posi));
+
 
     _file->Vaciar_tiempos(L_tiempos);//escribe en archivo los tiempos
     _file->Vaciar_datos(L_paths);//escribe en archivo los paths
@@ -149,7 +191,6 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
 
 
 }
-
 
 double MainWindow::agregar_a_listas(QString path,int index)
 {
@@ -207,13 +248,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
             Ocultar_lista();
         else
         {
-            if(_player->isPlaying())
-                _player->pause();
-            else
-            {
-                time->start();
-                _player->play();
-            }
+            Pausar_reanudar();
         }
     }
 }
@@ -553,6 +588,12 @@ void MainWindow::on_btn_max_clicked()
 
     if(!this->isMaximized())
     {
+        QIcon icon_max(*px_rest);
+        QSize iconSize_max(13,13);
+        ui->btn_max->setIcon(icon_max);
+        ui->btn_max->setIconSize(iconSize_max);
+
+
         if(!list_hide)
         {
             hilo_1 = new Hilos;
@@ -662,11 +703,7 @@ void MainWindow::on_btn_vid_clicked()
 
 void MainWindow::on_btn_play_clicked()
 {
-
-    if(_player->isPlaying())
-        _player->pause();
-    else
-        _player->play();
+    Pausar_reanudar();
 }
 
 void MainWindow::on_btn_atras__clicked()
@@ -686,13 +723,22 @@ void MainWindow::on_btn_full_clicked()
 
     if(full==false)
     {
+
+
+
+
+        QIcon icon_full(*px_exit_full);
+        QSize iconSize_full(15,15);
+        ui->btn_full->setIcon(icon_full);
+        ui->btn_full->setIconSize(iconSize_full);
+
         QScreen *screen = QApplication::screens().at(0);
 
         int ancho = screen->size().width();
         int alto = screen->size().height();
 
         this->setGeometry(0,0,ancho,alto);
-        ui->btn_full->setText("] [");
+
         ui->lbl_barra->hide();
         ui->btn_min->hide();
         ui->btn_max->hide();
@@ -705,7 +751,12 @@ void MainWindow::on_btn_full_clicked()
     else
     {
 
-        ui->btn_full->setText("[ ]");
+
+
+        QIcon icon_full(*px_full);
+        QSize iconSize_full(15,15);
+        ui->btn_full->setIcon(icon_full);
+        ui->btn_full->setIconSize(iconSize_full);
         ui->lbl_barra->show();
         ui->btn_min->show();
         ui->btn_max->show();
@@ -773,3 +824,17 @@ void MainWindow::on_btn_rec_clicked()
 
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+
+    if(event->key()==Qt::Key_Space)
+    {
+
+
+
+           Pausar_reanudar();
+
+
+
+    }
+}

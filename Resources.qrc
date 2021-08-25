@@ -2,6 +2,11 @@
     <qresource prefix="/icon">
         <file>Icon/close.png</file>
         <file>Icon/slider.png</file>
+        <file>Icon/full_screen.png</file>
+        <file>Icon/exit_full_screen.png</file>
+        <file>Icon/window_maximize.png</file>
+        <file>Icon/minimize.png</file>
+        <file>Icon/minimize_.png</file>
+        <file>Icon/restaurar.png</file>
     </qresource>
-    <qresource prefix="/datos"/>
 </RCC>

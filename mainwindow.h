@@ -38,6 +38,7 @@ public:
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 
 public slots:
@@ -54,6 +55,8 @@ public slots:
     void Imprimir_tiempo();
     void guardar_tiempo();
     void get_frames(QString path);
+    void Colocar_imagenes();
+    void Pausar_reanudar();
     double agregar_a_listas(QString path, int index);
     QStringList Conv_sm_min();
     QStringList  Elim_rep(QStringList lista, QString path, int &ind, bool &res);
@@ -112,6 +115,12 @@ private:
     QFileSystemModel *directorio;
     QFileSystemModel *archivo;
     QFileInfoList list_vid;
+    QPixmap *px_close;
+    QPixmap *px_max;
+    QPixmap *px_full;
+    QPixmap *px_exit_full;
+    QPixmap *px_min;
+    QPixmap *px_rest;
     QPropertyAnimation *ani_lst;
     QPropertyAnimation *ani_btn1;
     QPropertyAnimation *ani_play;
