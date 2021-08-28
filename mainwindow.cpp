@@ -124,6 +124,18 @@ void MainWindow::Pausar_reanudar()
     }
 }
 
+void MainWindow::retrasar_segundos()
+{
+    double aux=(pos-5000)/dur_max;
+    _player->setPosition(aux);
+}
+
+void MainWindow::adelantar_segundos()
+{
+    double aux=(pos+5000)/dur_max;
+    _player->setPosition(aux);
+}
+
 void MainWindow::Declarar_objetos()
 {
     px_close = new QPixmap(":/icon/Icon/close.png");
@@ -708,13 +720,12 @@ void MainWindow::on_btn_play_clicked()
 
 void MainWindow::on_btn_atras__clicked()
 {
-
-
+    retrasar_segundos();
 }
 
 void MainWindow::on_btn_adelante_clicked()
 {
-
+   adelantar_segundos();
 }
 
 void MainWindow::on_btn_full_clicked()
@@ -827,14 +838,17 @@ void MainWindow::on_btn_rec_clicked()
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
 
-    if(event->key()==Qt::Key_Space)
+    switch (event->key())
     {
-
-
-
-           Pausar_reanudar();
-
-
+        case Qt::Key_Space:
+            Pausar_reanudar();
+        break;
+        case Qt::Key_Left:
+             retrasar_segundos();
+        break;
+        case Qt::Key_Right:
+             adelantar_segundos();
+        break;
 
     }
 }

@@ -57,6 +57,8 @@ public slots:
     void get_frames(QString path);
     void Colocar_imagenes();
     void Pausar_reanudar();
+    void retrasar_segundos();
+    void adelantar_segundos();
     double agregar_a_listas(QString path, int index);
     QStringList Conv_sm_min();
     QStringList  Elim_rep(QStringList lista, QString path, int &ind, bool &res);
