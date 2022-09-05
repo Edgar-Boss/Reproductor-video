@@ -11,6 +11,8 @@
 #include <QTextStream>
 #include <QStringListModel>
 #include <QKeyEvent>
+#include <QDir>
+
 
 
 #include "mainwindow.h"
@@ -22,6 +24,9 @@ MainWindow::MainWindow(char **argv, QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    if(QDir(QCoreApplication::applicationDirPath()+"/Recursos").exists()==false)
+        QDir().mkdir(QCoreApplication::applicationDirPath()+"/Recursos");
 
 
     Declarar_objetos();
@@ -119,7 +124,8 @@ void MainWindow::Pausar_reanudar()
         _player->pause();
     else
     {
-         time->start();
+
+        time->start();
         _player->play();
     }
 }
@@ -175,8 +181,7 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
     time = new Hilo_tiempo();
     hilo=true;
 
-    connect(time,&Hilo_tiempo::env_tiempo,this,&MainWindow::Imprimir_tiempo);
-    connect(_player,&PlayerVLC::positionChanged,this,&MainWindow::colocar_posicion);
+
     _player->setMedia(QUrl::fromLocalFile(path));
     _player->play();
     dur_max=_player->duration();
@@ -193,13 +198,15 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
     _player->setPosition(posi);
     ui->sld_dur->setMaximum(dur_max);
 
-    get_frames(path);
+
 
     recientes=true;
-
+    connect(time,&Hilo_tiempo::env_tiempo,this,&MainWindow::Imprimir_tiempo);
+    connect(_player,&PlayerVLC::positionChanged,this,&MainWindow::colocar_posicion);
 
     Colocar_dur();
     time->start();
+
 
 
 }
@@ -252,27 +259,9 @@ void MainWindow::obtener_medidas()
     alto_vent = this->height();
 }
 
-void MainWindow::mousePressEvent(QMouseEvent *event)
-{
-    if(event->x() > 0 && event->x()<ancho_vent && event->y()>25 && event->y()<alto_vent)
-    {
-        if(list_hide==0)
-            Ocultar_lista();
-        else
-        {
-            Pausar_reanudar();
-        }
-    }
-}
 
-void MainWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    if(event->x() > most_list && list_hide ==true)
-    {
-        Mostrar_lista();
-    }
 
-}
+
 
 QStringList MainWindow::Elim_rep(QStringList lista,QString path, int &ind, bool &res)
 {
@@ -300,14 +289,11 @@ void MainWindow::Colocar_dur()
 void MainWindow::Imprimir_tiempo()
 {
 
-    if(_player->isPlaying())
-        qDebug("reproduciendo");
-    else
-    {
-
-        qDebug("Detenido");
-        time->terminate();
-    }
+        if(!_player->isPlaying() && prim_rep == false)
+        {
+            time->terminate();
+        }
+        prim_rep = false;//pone en falso la primera reproduccion
 
     QStringList tiempo = Conv_sm_min();
 
@@ -322,22 +308,6 @@ void MainWindow::guardar_tiempo()
     L_tiempos.insert(0,pos);
     _file->Vaciar_tiempos(L_tiempos);
 
-}
-
-void MainWindow::get_frames(QString path)
-{
-    QString Cad_inf_Videos;
-    QProcess *Get_info_Video= new QProcess();
-    QStringList arguments;
-    arguments <<"-v" <<"error"<<"-select_streams"<<"v:0"<<"-show_entries"<<"stream=r_frame_rate"<<"-of"<<"default=noprint_wrappers=1:nokey=1"<<path<<"-hide_banner";
-
-    Get_info_Video->setProcessChannelMode(QProcess::MergedChannels);
-    Get_info_Video->start(ffprobe,arguments);
-    Get_info_Video->waitForFinished();
-    Cad_inf_Videos = Get_info_Video->readAllStandardOutput();
-    int a= Cad_inf_Videos.mid(0,Cad_inf_Videos.indexOf("/")).toInt();
-    int b= Cad_inf_Videos.mid(Cad_inf_Videos.indexOf("/")+1,(Cad_inf_Videos.indexOf('\r')-Cad_inf_Videos.indexOf("/"))-1).toUInt();
-    total_frames= (int)(a/b)*_player->duration()/1000.00;
 }
 
 QStringList MainWindow::Conv_sm_min()
@@ -372,12 +342,7 @@ QStringList MainWindow::Conv_sm_min()
     return tiempo;
 }
 
-void MainWindow::on_btn_min_clicked()
-{
-    this->setWindowState(Qt::WindowMinimized) ;
-    Ajustar_elementos();
 
-}
 
 void MainWindow::recnumeros()
 {
@@ -585,6 +550,7 @@ void MainWindow::on_sld_dur_sliderMoved(int position)//metodo para cambiar la po
 
 void MainWindow::on_btn_close_clicked()
 {
+    mover=false;
     if(_player->isPlaying())
         _player->stop();
     L_tiempos.removeAt(0);
@@ -597,7 +563,7 @@ void MainWindow::on_btn_close_clicked()
 
 void MainWindow::on_btn_max_clicked()
 {
-
+    mover=false;
     if(!this->isMaximized())
     {
         QIcon icon_max(*px_rest);
@@ -640,6 +606,14 @@ void MainWindow::on_btn_max_clicked()
 
 }
 
+void MainWindow::on_btn_min_clicked()
+{
+    mover=false;
+    this->setWindowState(Qt::WindowMinimized) ;
+    Ajustar_elementos();
+
+}
+
 void MainWindow::on_lstv_directorio_clicked(const QModelIndex &index)
 {
 
@@ -666,10 +640,12 @@ void MainWindow::on_lstv_directorio_doubleClicked(const QModelIndex &index)//Sel
         rep =archivo->fileInfo(index).absoluteFilePath();
     }
 
+
     if(rep.endsWith(".mp4") || rep.endsWith(".mkv") || rep.endsWith(".avi"))
     {
 
         Reproductor(rep,index.row());
+
         Ocultar_lista();
     }
     else
@@ -852,3 +828,81 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
     }
 }
+
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    if(event->x() > 0 && event->x()<ancho_vent && event->y()>20 && event->y()<alto_vent)
+    {
+
+        mover=false;
+        if(list_hide==0)
+            Ocultar_lista();
+        else
+        {
+
+            Pausar_reanudar();
+        }
+    }
+    else if(Qt::LeftButton == event->button())
+    {
+
+        m_offset =  event->pos();
+        mover=true;
+    }
+    else
+    {
+
+        QMainWindow::mousePressEvent(event);
+    }
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    if(event->x() > most_list && list_hide ==true)
+    {
+
+        Mostrar_lista();
+    }
+
+   if(Qt::LeftButton & event->buttons() && mover == true)
+   {
+        obtener_medidas();
+
+
+        QPoint punto = event->globalPos()-m_offset;
+        this->move(punto);
+
+    }
+
+
+
+
+}
+
+void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    /*
+    {
+        if(Qt::LeftButton == event->button())
+        {
+            if(this->isFullScreen())
+            {
+    //            this->showNormal();
+                this->setWindowState(Qt::WindowNoState);
+            }
+            else
+            {
+    //            this->showFullScreen();
+                this->setWindowState(Qt::WindowFullScreen);
+            }
+        }
+        else
+        {
+            QMainWindow::mouseDoubleClickEvent(event);
+        }
+    }
+    *///comentario de prueba
+}
+
+
+

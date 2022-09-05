@@ -12,6 +12,7 @@
 #include <QPropertyAnimation>
 #include <QThread>
 #include <QDir>
+#include <QPoint>
 
 
 #include "PlayerVLC.h"
@@ -36,9 +37,10 @@ public:
     ~MainWindow();
 
 protected:
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
+            void mousePressEvent(QMouseEvent *event) override;
+            void mouseMoveEvent(QMouseEvent *event) override;
+            void keyPressEvent(QKeyEvent *event) override;
+            void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 
 public slots:
@@ -54,7 +56,7 @@ public slots:
     void Colocar_dur();
     void Imprimir_tiempo();
     void guardar_tiempo();
-    void get_frames(QString path);
+
     void Colocar_imagenes();
     void Pausar_reanudar();
     void retrasar_segundos();
@@ -111,6 +113,7 @@ private:
     const QString ffprobe = "API/ffmpeg/bin/ffprobe";
     Ui::MainWindow *ui;
 
+    QPoint m_offset;
     QVideoWidget *_viwid;
     PlayerVLC *_player;
     QDir _direc;
@@ -147,8 +150,9 @@ private:
     bool full; //si la ventana se encuentra full
     bool recientes; // si se estan usando videos en la lista de recientes
     bool hilo;//si algun hilo esta corriendo
-
-
+    bool f_loop=true;//bandera para corregir el falso de _player->isplaying()
+    bool mover;//bandera para determinar si se puede mover la ventana
+    bool prim_rep = true;
     int ancho_vent;
     int alto_vent;
     float dur_max; //variable para guardar duracion del video
