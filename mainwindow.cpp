@@ -901,7 +901,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
             QMainWindow::mouseDoubleClickEvent(event);
         }
     }
-    */
+    *///comentario de prueba
 }
 
 
