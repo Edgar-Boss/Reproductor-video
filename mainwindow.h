@@ -152,6 +152,7 @@ private:
     bool hilo;//si algun hilo esta corriendo
     bool f_loop=true;//bandera para corregir el falso de _player->isplaying()
     bool mover;//bandera para determinar si se puede mover la ventana
+    bool prim_rep = true;
     int ancho_vent;
     int alto_vent;
     float dur_max; //variable para guardar duracion del video

@@ -122,7 +122,7 @@ void MainWindow::Pausar_reanudar()
 
     if(_player->isPlaying())
         _player->pause();
-    else if(f_loop ==false)
+    else
     {
 
         time->start();
@@ -208,6 +208,7 @@ void MainWindow::Reproductor(QString path, int index)//metodo para reproducir vi
     time->start();
 
 
+
 }
 
 double MainWindow::agregar_a_listas(QString path,int index)
@@ -288,20 +289,11 @@ void MainWindow::Colocar_dur()
 void MainWindow::Imprimir_tiempo()
 {
 
-
-
-    if(f_loop==false) //condicionador para corregir bug ->isplaying()
-    {
-        if(!_player->isPlaying())
+        if(!_player->isPlaying() && prim_rep == false)
         {
-
-
             time->terminate();
         }
-
-    }
-    else
-        f_loop=true;
+        prim_rep = false;//pone en falso la primera reproduccion
 
     QStringList tiempo = Conv_sm_min();
 
@@ -859,7 +851,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
     else
     {
-        qDebug("?????????????????????????");
+
         QMainWindow::mousePressEvent(event);
     }
 }
